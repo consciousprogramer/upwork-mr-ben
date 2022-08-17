@@ -3,6 +3,8 @@ import axios from "axios"
 import languageEncoding from "detect-file-encoding-and-language"
 import { BACKEND_URL } from "../utils/constants"
 
+import mp4boxfile from "mp4box"
+
 function FileUpload() {
   const [uploadId, setUploadId] = useState({})
   const [isFileSelected, setIsFileSelected] = useState(false)
@@ -42,17 +44,21 @@ function FileUpload() {
     } else {
       setIsFileSelected(false)
     }
+
     let fileData = e.target.files[0]
 
-    languageEncoding(fileData).then((fileInfo) => {
-      setMetaDetails((prev) => {
-        const tempDetails = { ...prev }
-        const { confidence, encoding, language } = fileInfo
-        tempDetails["encoding"] = encoding
-        tempDetails["language"] = language
-        return tempDetails
+    if (fileData) {
+      languageEncoding(fileData).then((fileInfo) => {
+        setMetaDetails((prev) => {
+          const tempDetails = { ...prev }
+          const { confidence, encoding, language } = fileInfo
+          tempDetails["encoding"] = encoding
+          tempDetails["language"] = language
+          console.log("encoding : ", encoding)
+          return tempDetails
+        })
       })
-    })
+    }
 
     const videoEl = document.createElement("video")
     videoEl.src = window.URL.createObjectURL(fileData)
