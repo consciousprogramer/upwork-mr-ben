@@ -22,9 +22,9 @@ function playMp4() {
 }
 function bindMp4box() {
     mp4boxfile.onReady = function (info) {
-        log('Get Video Info');
-        video.src = ASSET_URL;
-        video.play();
+        // log('Get Video Info');
+        // video.src = ASSET_URL;
+        // video.play();
         showVideoInfo(info);
     }
 }

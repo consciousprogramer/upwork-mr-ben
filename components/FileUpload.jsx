@@ -3,7 +3,7 @@ import axios from "axios"
 import languageEncoding from "detect-file-encoding-and-language"
 import { BACKEND_URL } from "../utils/constants"
 
-import mp4boxfile from "mp4box"
+import mp4Box from "mp4box"
 
 function FileUpload() {
   const [uploadId, setUploadId] = useState({})
@@ -20,7 +20,7 @@ function FileUpload() {
     hasCompleted: false,
   })
 
-  const fileInputChangeHandler = (e) => {
+  const fileInputChangeHandler = async (e) => {
     if (isUploading.hasCompleted) {
       setIsUploading({
         hasCompleted: false,
@@ -48,6 +48,56 @@ function FileUpload() {
     let fileData = e.target.files[0]
 
     if (fileData) {
+      const mp4BoxFile = mp4Box.createFile()
+
+      mp4BoxFile.onReady = function (info) {
+        console.log("MP4 BOX INFO READY : ", info)
+        mp4BoxFile.flush()
+      }
+
+      // const fileDataArrayBuffer = await fileData.arrayBuffer()
+      // fileDataArrayBuffer.fileStart = 0
+
+      // const buf = await file.slice(start, start + chunk_size).arrayBuffer()
+      // buf.fileStart = start
+      // mp4boxfile.appendBuffer(buf)
+
+      const chunk_size = 5
+      const totalChunks = Math.ceil(fileData.size / (chunk_size * 1024 * 1024))
+
+      for (let i = 0; i < totalChunks; i++) {
+        if (totalChunks - i <= 1) {
+          fileData
+            .slice(i * chunk_size * 1024 * 1024, fileData.size)
+            .arrayBuffer()
+            .then((slicedBuffer) => {
+              slicedBuffer.fileStart = i * chunk_size * 1024 * 1024
+              mp4BoxFile.appendBuffer(slicedBuffer)
+            })
+        } else {
+          fileData
+            .slice(i * 1024 * 1024, (i + 1) * 1024 * 1024)
+            .arrayBuffer()
+            .then((slicedBuffer) => {
+              slicedBuffer.fileStart = i * chunk_size * 1024 * 1024
+              mp4BoxFile.appendBuffer(slicedBuffer)
+            })
+        }
+      }
+
+      // const slicedFileBuffer = await fileData
+      //   .slice(0, 5 * 1024 * 1024)
+      //   .arrayBuffer()
+      // slicedFileBuffer.fileStart = 0
+
+      // BUFFER SLICING
+      // fileDataArrayBuffer.fileStart = fileDataArrayBuffer.byteLength - offSet
+      // const slicedBuffer = fileDataArrayBuffer.slice(0, 8000)
+      // slicedBuffer.fileStart = 0
+
+      // mp4BoxFile.appendBuffer(fileDataArrayBuffer)
+      // mp4BoxFile.appendBuffer(slicedFileBuffer)
+
       languageEncoding(fileData).then((fileInfo) => {
         setMetaDetails((prev) => {
           const tempDetails = { ...prev }
@@ -60,26 +110,26 @@ function FileUpload() {
       })
     }
 
-    const videoEl = document.createElement("video")
-    videoEl.src = window.URL.createObjectURL(fileData)
+    // const videoEl = document.createElement("video")
+    // videoEl.src = window.URL.createObjectURL(fileData)
 
-    videoEl.onloadedmetadata = (e) => {
-      window.URL.revokeObjectURL(videoEl.src)
-      const { name, type, size } = fileData
-      const { videoWidth, videoHeight, duration } = videoEl
+    // videoEl.onloadedmetadata = (e) => {
+    //   window.URL.revokeObjectURL(videoEl.src)
+    //   const { name, type, size } = fileData
+    //   const { videoWidth, videoHeight, duration } = videoEl
 
-      setMetaDetails((prev) => {
-        const tempDetails = { ...prev }
-        tempDetails["name"] = name
-        tempDetails["size"] = `${(size / (1024 * 1024)).toFixed(2)} MB`
-        tempDetails["extension"] = type
-        tempDetails["duration"] = `${duration.toFixed(0)} Seconds`
-        tempDetails["videoWidth"] = videoWidth
-        tempDetails["videoHeight"] = videoHeight
-        tempDetails["resolution"] = `${videoWidth} x ${videoHeight}`
-        return tempDetails
-      })
-    }
+    //   setMetaDetails((prev) => {
+    //     const tempDetails = { ...prev }
+    //     tempDetails["name"] = name
+    //     tempDetails["size"] = `${(size / (1024 * 1024)).toFixed(2)} MB`
+    //     tempDetails["extension"] = type
+    //     tempDetails["duration"] = `${duration.toFixed(0)} Seconds`
+    //     tempDetails["videoWidth"] = videoWidth
+    //     tempDetails["videoHeight"] = videoHeight
+    //     tempDetails["resolution"] = `${videoWidth} x ${videoHeight}`
+    //     return tempDetails
+    //   })
+    // }
   }
 
   const uploadData = async () => {
