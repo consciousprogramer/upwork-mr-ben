@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import axios from "axios"
 import languageEncoding from "detect-file-encoding-and-language"
-import { BACKEND_URL } from "../utils/constants"
+import { BACKEND_URL, SAMPLE_DATA } from "../utils/constants"
 
 import mp4Box from "mp4box"
 
@@ -9,6 +9,10 @@ function FileUpload() {
   const [uploadId, setUploadId] = useState({})
   const [isFileSelected, setIsFileSelected] = useState(false)
   const [metaDetails, setMetaDetails] = useState({})
+
+  const [audioMetaDetails, setAudioMetaDetails] = useState({})
+  const [videoMetaDetails, setVideoMetaDetail] = useState({})
+
   const [uploadStatus, setUploadStatus] = useState({
     partsUploaded: 0,
     totalParts: 0,
@@ -56,6 +60,25 @@ function FileUpload() {
 
       mp4BoxFile.onReady = function (info) {
         console.log("MP4 BOX INFO READY : ", info)
+
+        // const videoInfo = SAMPLE_DATA
+        const videoInfo = info
+
+        setAudioMetaDetails(videoInfo.audioTracks)
+
+        setVideoMetaDetail(videoInfo.videoTracks)
+
+        const { mime, duration } = videoInfo
+
+        const { size, name } = fileData
+
+        setMetaDetails({
+          mime,
+          size,
+          duration,
+          name,
+        })
+
         mp4BoxFile.flush()
       }
 
