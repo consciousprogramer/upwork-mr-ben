@@ -20,6 +20,10 @@ function FileUpload() {
     hasCompleted: false,
   })
 
+  function clearFileInput(e) {
+    document.getElementById("videoFile").value = null
+  }
+
   const fileInputChangeHandler = async (e) => {
     if (isUploading.hasCompleted) {
       setIsUploading({
@@ -55,6 +59,11 @@ function FileUpload() {
         mp4BoxFile.flush()
       }
 
+      // mp4BoxFile.onReady = function (e) {
+      //   console.log("MP4 BOX ERROR : ", e)
+      //   mp4BoxFile.flush()
+      // }
+
       // const fileDataArrayBuffer = await fileData.arrayBuffer()
       // fileDataArrayBuffer.fileStart = 0
 
@@ -62,23 +71,33 @@ function FileUpload() {
       // buf.fileStart = start
       // mp4boxfile.appendBuffer(buf)
 
-      const chunk_size = 5
+      const chunk_size = 10
       const totalChunks = Math.ceil(fileData.size / (chunk_size * 1024 * 1024))
 
-      for (let i = 0; i < totalChunks; i++) {
+      let processedlength = 0
+      // for (let i = 0; i < totalChunks; i++) {
+      for (let i = 0; i < 1; i++) {
         if (totalChunks - i <= 1) {
           fileData
             .slice(i * chunk_size * 1024 * 1024, fileData.size)
             .arrayBuffer()
             .then((slicedBuffer) => {
+              console.log("CHUNK LENGTH LAST: ", slicedBuffer.byteLength)
+              processedlength += slicedBuffer.byteLength
               slicedBuffer.fileStart = i * chunk_size * 1024 * 1024
               mp4BoxFile.appendBuffer(slicedBuffer)
+              console.log(
+                "PROCESSED COMPLETLY : ",
+                `${fileData.size === processedlength}`
+              )
             })
         } else {
           fileData
             .slice(i * 1024 * 1024, (i + 1) * 1024 * 1024)
             .arrayBuffer()
             .then((slicedBuffer) => {
+              console.log(`CHUNK LENGTH ${i} : `, slicedBuffer.byteLength)
+              processedlength += slicedBuffer.byteLength
               slicedBuffer.fileStart = i * chunk_size * 1024 * 1024
               mp4BoxFile.appendBuffer(slicedBuffer)
             })
@@ -98,16 +117,16 @@ function FileUpload() {
       // mp4BoxFile.appendBuffer(fileDataArrayBuffer)
       // mp4BoxFile.appendBuffer(slicedFileBuffer)
 
-      languageEncoding(fileData).then((fileInfo) => {
-        setMetaDetails((prev) => {
-          const tempDetails = { ...prev }
-          const { confidence, encoding, language } = fileInfo
-          tempDetails["encoding"] = encoding
-          tempDetails["language"] = language
-          console.log("encoding : ", encoding)
-          return tempDetails
-        })
-      })
+      // languageEncoding(fileData).then((fileInfo) => {
+      //   setMetaDetails((prev) => {
+      //     const tempDetails = { ...prev }
+      //     const { confidence, encoding, language } = fileInfo
+      //     tempDetails["encoding"] = encoding
+      //     tempDetails["language"] = language
+      //     console.log("encoding : ", encoding)
+      //     return tempDetails
+      //   })
+      // })
     }
 
     // const videoEl = document.createElement("video")
@@ -284,6 +303,7 @@ function FileUpload() {
               id="videoFile"
               className="tw-mx-auto"
               onChange={(e) => fileInputChangeHandler(e)}
+              accept="video/*"
             />
           </div>
 
@@ -295,8 +315,11 @@ function FileUpload() {
             >
               Upload
             </button>
-            <button className=" tw-bg-red-600 tw-rounded tw-text-white tw-px-4 tw-py-2">
-              Cancel
+            <button
+              onClick={clearFileInput}
+              className=" tw-bg-red-600 tw-rounded tw-text-white tw-px-4 tw-py-2"
+            >
+              Clear
             </button>
           </div>
 
