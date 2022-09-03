@@ -87,7 +87,6 @@ function FileUpload() {
       const chunk_size = uploadStatus.chunkSize
       const totalChunks = Math.ceil(fileData.size / (chunk_size * MILLION))
 
-      // for (let i = 0; i < Math.min(10, totalChunks); i++) {
       for (let i = 0; i < totalChunks; i++) {
         const startsAt = i * MILLION * chunk_size
         const endsAt =
@@ -116,6 +115,8 @@ function FileUpload() {
 
     try {
       const uniqueFileName = `${fileName}__${nanoid(24)}.${fileType}`
+
+      // get unique uploadId
       let res = await axios.post(`${url}/getUploadId`, {
         fileName: uniqueFileName,
       })
@@ -140,12 +141,12 @@ function FileUpload() {
 
       let multiUploadArray = []
 
-      // let getSignedUrlRes = await axios.post(`${url}/getUploadPart`, {
-      //   fileName: uniqueFileName,
-      //   partNumber: chunkCount,
-      //   uploadId: uploadTempId.UploadId,
-      //   fileType,
-      // })
+      let getSignedUrlRes = await axios.post(`${url}/getUploadPart`, {
+        fileName: uniqueFileName,
+        partNumber: chunkCount,
+        uploadId: uploadTempId.UploadId,
+        fileType,
+      })
 
       const allPartUploadPromises = []
 
@@ -155,42 +156,26 @@ function FileUpload() {
         let fileBlob =
           uploadCount < chunkCount ? file.slice(start, end) : file.slice(start)
 
-        // let preSignedUrl = getSignedUrlRes.data.parts[uploadCount - 1].signedUrl
+        let preSignedUrl = getSignedUrlRes.data.parts[uploadCount - 1].signedUrl
 
         allPartUploadPromises.push(
-          axios
-            .get(
-              `${url}/getPartUploadUrl?fileName=${uniqueFileName}&partNumber=${uploadCount}&uploadId=${uploadTempId.UploadId}`
-            )
-            .then(({ data: preSignedUrl }) => {
-              console.log(
-                "get url of : ",
-                uploadCount,
-                " ",
-                // decodeURI(preSignedUrl)
-                preSignedUrl
-              )
-              // return axios.put(decodeURI(preSignedUrl), fileBlob, {})
-              return axios.put(preSignedUrl, fileBlob, {})
-            })
-            // axios.put(preSignedUrl, fileBlob, {})
-            .then((response) => {
-              console.log("uploaded : ", uploadCount)
-              let EtagHeader = response.headers["etag"]
+          axios.put(preSignedUrl, fileBlob, {}).then((response) => {
+            console.log("uploaded : ", uploadCount)
+            let EtagHeader = response.headers["etag"]
 
-              let uploadPartDetails = {
-                ETag: EtagHeader,
-                PartNumber: uploadCount,
+            let uploadPartDetails = {
+              ETag: EtagHeader,
+              PartNumber: uploadCount,
+            }
+            multiUploadArray.push(uploadPartDetails)
+            setUploadStatus((prev) => {
+              return {
+                ...prev,
+                partsUploaded: prev.partsUploaded + 1,
               }
-              multiUploadArray.push(uploadPartDetails)
-              setUploadStatus((prev) => {
-                return {
-                  ...prev,
-                  partsUploaded: prev.partsUploaded + 1,
-                }
-              })
-              return
             })
+            return
+          })
         )
       }
 

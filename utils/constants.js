@@ -1,4 +1,4 @@
-const BACKEND_URL = "https://c150-150-129-206-36.in.ngrok.io"
+const BACKEND_URL = "https://1791-103-85-10-51.in.ngrok.io"
 
 const SAMPLE_DATA = {
     "hasMoov": true,
